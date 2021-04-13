@@ -8,6 +8,9 @@ install.packages("nnet")
 install.packages("ROCR")
 install.packages("e1071")
 install.packages("naivebayes")
+install.packages("rpart")
+install.packages("randomForest")
+install.packages("kknn")
 
 #--------------------------------------#
 # ACTIVATION DES LIRAIRIES NECESSAIRES #
@@ -17,6 +20,9 @@ library(nnet)
 library(ROCR)
 library(e1071)
 library(naivebayes)
+library(rpart)
+library(randomForest)
+library(kknn)
 
 #-------------------------#
 # PREPARATION DES DONNEES #
@@ -129,7 +135,7 @@ test_nb <- function(arg1, arg2, arg3, arg4){
   payment_QF_ET$default <- nb_class
   
   # Matrice de confusion
-  # print(table(payment_QF_ET$default, nb_class))
+  print(table(payment_QF_ET$default, nb_class))
   
   # Test du classifeur : probabilites pour chaque prediction
   nb_prob <- predict(nb, payment_QF_ET, type="prob")
@@ -162,3 +168,81 @@ test_nb(0, FALSE, FALSE, "red")
 test_nb(20, FALSE, TRUE, "blue")
 test_nb(0, TRUE, TRUE, "green")
 test_nb(20, TRUE, TRUE, "orange")
+
+#-------------------------#
+# ARBRE DE DECISION RPART #
+#-------------------------#
+
+# Definition de la fonction d'apprentissage, test et evaluation par courbe ROC
+test_rpart <- function(arg1, arg2, arg3, arg4){
+  # Apprentissage du classifeur
+  dt <- rpart(default~., payment_QF_EA, parms = list(split = arg1), control = rpart.control(minbucket = arg2))
+  
+  # Tests du classifieur : classe predite
+  dt_class <- predict(dt, payment_QF_ET, type="class")
+  
+  payment_QF_ET$default <- dt_class
+  
+  # Matrice de confusion
+  print(table(payment_QF_ET$default, dt_class))
+  
+  # Tests du classifieur : probabilites pour chaque prediction
+  dt_prob <- predict(dt, payment_QF_ET, type="prob")
+  
+  # Courbes ROC
+  dt_pred <- prediction(dt_prob[,2], payment_QF_ET$default)
+  dt_perf <- performance(dt_pred,"tpr","fpr")
+  plot(dt_perf, main = "Arbres de décision rpart()", add = arg3, col = arg4)
+  
+  # Calcul de l'AUC et affichage par la fonction cat()
+  dt_auc <- performance(dt_pred, "auc")
+  cat("AUC = ", as.character(attr(dt_auc, "y.values")))
+  
+  # Return sans affichage sur la console
+  invisible()
+}
+
+#----------------#
+# RANDOM FORESTS #
+#----------------#
+
+# Definition de la fonction d'apprentissage, test et evaluation par courbe ROC
+test_rf <- function(arg1, arg2, arg3, arg4){
+  # Apprentissage du classifeur
+  rf <- randomForest(default~., payment_QF_EA, ntree = arg1, mtry = arg2)
+  
+  # Test du classifeur : classe predite
+  rf_class <- predict(rf,payment_QF_ET, type="response")
+  payment_QF_ET$default <- rf_class
+  
+  # Matrice de confusion
+  print(table(payment_QF_ET$default, rf_class))
+  
+  # Test du classifeur : probabilites pour chaque prediction
+  rf_prob <- predict(rf, payment_QF_ET, type="prob")
+  
+  # Courbe ROC
+  rf_pred <- prediction(rf_prob[,2], payment_QF_ET$default)
+  rf_perf <- performance(rf_pred,"tpr","fpr")
+  plot(rf_perf, main = "Random Forests randomForest()", add = arg3, col = arg4)
+  
+  # Calcul de l'AUC et affichage par la fonction cat()
+  rf_auc <- performance(rf_pred, "auc")
+  cat("AUC = ", as.character(attr(rf_auc, "y.values")))
+  
+  # Return sans affichage sur la console
+  invisible()
+}
+
+
+# Arbres de decision
+test_rpart("gini", 10, FALSE, "red")
+test_rpart("gini", 5, TRUE, "blue")
+test_rpart("information", 10, TRUE, "green")
+test_rpart("information", 5, TRUE, "orange")
+
+# Forets d'arbres decisionnels aleatoires
+test_rf(300, 3, FALSE, "red")
+test_rf(300, 5, TRUE, "blue")
+test_rf(500, 3, TRUE, "green")
+test_rf(500, 5, TRUE, "orange")

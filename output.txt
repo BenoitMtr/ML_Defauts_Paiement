@@ -530,3 +530,17 @@ iter  90 value 641.544834
 iter 100 value 620.161970
 final  value 620.161970 
 stopped after 100 iterations
+# weights:  801
+initial  value 1311.923701 
+iter  10 value 793.180589
+iter  20 value 792.695961
+iter  30 value 792.468208
+iter  40 value 791.881308
+iter  50 value 790.051345
+iter  60 value 786.904098
+iter  70 value 783.902627
+iter  80 value 783.408483
+iter  90 value 782.951088
+iter 100 value 777.614639
+final  value 777.614639 
+stopped after 100 iterations
