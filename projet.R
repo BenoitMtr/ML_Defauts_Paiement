@@ -1,4 +1,4 @@
-#TODO: établir le choix de classifieur le plus performant, l'appliquer sur l'emsemble à prédire
+#TODO: établir le choix de classifieur le plus performant, l'appliquer sur l'ensemble à
 
 #--------------------------------------------#
 # INSTALLATION/MAJ DES LIRAIRIES NECESSAIRES #
@@ -12,6 +12,7 @@ install.packages("rpart")
 install.packages("randomForest")
 install.packages("kknn")
 install.packages("C50")
+install.packages("tree")
 
 #--------------------------------------#
 # ACTIVATION DES LIRAIRIES NECESSAIRES #
@@ -25,6 +26,8 @@ library(rpart)
 library(randomForest)
 library(kknn)
 library(C50)
+library(tree)
+
 
 #-------------------------#
 # PREPARATION DES DONNEES #
@@ -248,10 +251,35 @@ test_C50 <- function()
   print(mc_tree1)
 }
 
+#----------------------------------------#
+# APPRENTISSAGE ARBRE DE DECISION 'tree' #
+#----------------------------------------#
+
+test_tree <- function()
+{
+  # Apprentissage arbre
+tree3 <- tree(default~., data=payment_EA)
+
+# Affichage graphique : tracage des arcs par la fonction plot.tree() 
+plot(tree3)
+
+# Application de 'tree1' sur l'ensemble de test produit_ET
+test_tree1 <- predict(tree3, payment_ET, type="class")
+mc_tree1 <- table(payment_ET$default, test_tree1)
+print(mc_tree1)
+
+# Ajout du texte au graphique par la fonction text.tree()
+text(tree3, pretty=0)
+}
+
+
 
 #-------------------------------------------------#
 # APPRENTISSAGE DES CONFIGURATIONS ALGORITHMIQUES #
 #-------------------------------------------------#
+
+test_C50()
+test_tree()
 
 # Réseaux de neurones nnet()
 test_nnet(50, 0.01, 100, FALSE, "red")
@@ -262,10 +290,6 @@ test_nnet(50, 0.001, 100, TRUE, "green")
 test_nnet(50, 0.001, 300, TRUE, "turquoise")
 test_nnet(25, 0.001, 100, TRUE, "grey")
 test_nnet(25, 0.001, 300, TRUE, "black")
-
-#-------------------------------------------------#
-# APPRENTISSAGE DES CONFIGURATIONS ALGORITHMIQUES #
-#-------------------------------------------------#
 
 # Support vector machines
 test_svm("linear", FALSE, "red")
