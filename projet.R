@@ -1,5 +1,3 @@
-#TODO: établir le choix de classifieur le plus performant, l'appliquer sur l'ensemble à
-
 #--------------------------------------------#
 # INSTALLATION/MAJ DES LIRAIRIES NECESSAIRES #
 #--------------------------------------------#
@@ -13,6 +11,7 @@ install.packages("randomForest")
 install.packages("kknn")
 install.packages("C50")
 install.packages("tree")
+install.packages("dplyr")
 
 #--------------------------------------#
 # ACTIVATION DES LIRAIRIES NECESSAIRES #
@@ -27,6 +26,7 @@ library(randomForest)
 library(kknn)
 library(C50)
 library(tree)
+library(dplyr)
 
 
 #-------------------------#
@@ -63,6 +63,7 @@ test_nnet <- function(arg1, arg2, arg3, arg4, arg5){
   
   # Test des classifeurs : probabilites pour chaque prediction
   nn_prob <- predict(nn, payment_ET, type="raw")
+  print(nn_prob)
   
   # Courbe ROC 
   nn_pred <- prediction(nn_prob[,1], payment_ET$default)
@@ -320,3 +321,45 @@ test_knn(10, 1, FALSE, "red")
 test_knn(10, 2, TRUE, "blue")
 test_knn(20, 1, TRUE, "green")
 test_knn(20, 2, TRUE, "orange")
+
+
+#-------------------------------------------------#
+#  APPLICATION DU CLASSIFIEUR A DATA PROJET NEW   #
+#-------------------------------------------------#
+
+formatProba <- function(x){
+  if(x<=0.5){
+    return(1-x)
+  } else {
+    return(x)
+  }
+}
+
+predictPayment <- function(arg1, arg2, arg3){
+  
+  # Création du modèle
+  nn <- nnet(default~., payment_EA, size = arg1, decay = arg2, maxit=arg3)
+  
+  # Application du modèle à data projet new
+  nn_class <- predict(nn, payment_to_predict, type="class")
+  
+  # Calcul des probabilités de chaque prédiction dans data projet new
+  nn_prob <- predict(nn, payment_to_predict, type="raw")
+  
+  print(nn_class)
+  print(nn_prob)
+  
+  payment_predicted <- select(payment_to_predict, customer)
+  payment_predicted$default <- nn_class
+  payment_predicted$prob <- sapply(nn_prob[,1], formatProba)
+  
+  print(payment_predicted)
+  
+  write.csv(payment_predicted, './Data projet new predicted.csv', row.names = FALSE)
+  
+  # Return ans affichage sur la console
+  invisible()
+}
+
+predictPayment(25, 0.01, 300)
+
